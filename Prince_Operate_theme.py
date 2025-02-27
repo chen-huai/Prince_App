@@ -110,20 +110,34 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         global configContent
         global username
         global role
+
         configContent = {}
         username = list(csvFile['A'])
         number = list(csvFile['B'])
         role = list(csvFile['C'])
         for i in range(len(username)):
             configContent['%s' % username[i]] = number[i]
-        MyMainWindow.getDefaultInformation(self)
 
-        try:
-            self.textBrowser.append("配置获取成功")
-        except AttributeError:
-            QMessageBox.information(self, "提示信息", "已获取配置文件内容", QMessageBox.Yes)
+        # 新增校验逻辑
+        required_keys = ('Date_URL', 'Invoice_File_URL', 'Billing_List_URL')
+        missing_keys = [k for k in required_keys if k not in configContent]
+        if missing_keys:
+            reply = QMessageBox.question(self, '信息', f"缺少必要配置项: {', '.join(missing_keys)}",
+                                         QMessageBox.Yes | QMessageBox.No,
+                                         QMessageBox.Yes)
+            if reply == QMessageBox.Yes:
+                MyMainWindow.createConfigContent(self)
+                self.textBrowser.append("创建并导入配置成功")
+                self.textBrowser.append('----------------------------------')
+                app.processEvents()
         else:
-            pass
+            MyMainWindow.getDefaultInformation(self)
+            try:
+                self.textBrowser.append("配置获取成功")
+            except AttributeError:
+                QMessageBox.information(self, "提示信息", "已获取配置文件内容", QMessageBox.Yes)
+            else:
+                pass
 
     # 创建配置文件
     def createConfigContent(self):
@@ -179,6 +193,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         try:
             # data处理
             self.lineEdit.setText('%s\\%s' % (configContent['Files_Import_URL'], configContent['Files_Name']))
+            self.textBrowser.append("配置获取成功")
+            self.textBrowser.append('----------------------------------')
         except Exception as msg:
             self.textBrowser.append("错误信息：%s" % msg)
             self.textBrowser.append('----------------------------------')
@@ -231,7 +247,19 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         myTable.createTable(df)
         myTable.showMaximized()
 
-
+    def prince_op(self):
+        data_file = self.lineEdit.text()
+        web_url = self.lineEdit_2.text()
+        if data_file:
+            self.textBrowser.append("开始执行操作")
+            app.processEvents()
+            data_obj = Get_Data()
+            df = data_obj.getFileData(data_file)
+            if df.empty:
+                self.textBrowser.append("文件为空")
+                app.processEvents()
+            else:
+                pass
 
 
 
