@@ -23,11 +23,11 @@
    </font>
   </property>
   <property name="windowTitle">
-   <string>SAP</string>
+   <string>Prince</string>
   </property>
   <property name="windowIcon">
-   <iconset>
-    <normaloff>ch.ico</normaloff>ch.ico</iconset>
+   <iconset resource="chicon.qrc">
+    <normaloff>:/ch.ico</normaloff>:/ch.ico</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -129,6 +129,7 @@
     </property>
     <addaction name="actionExport"/>
     <addaction name="actionImport"/>
+    <addaction name="actionView"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -148,9 +149,9 @@
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionExit">
+  <action name="actionView">
    <property name="text">
-    <string>Edit</string>
+    <string>View</string>
    </property>
   </action>
   <action name="actionAuthor">
@@ -171,6 +172,11 @@
   <action name="actionImport">
    <property name="text">
     <string>Import</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
    </property>
   </action>
  </widget>
