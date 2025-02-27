@@ -119,7 +119,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             configContent['%s' % username[i]] = number[i]
 
         # 新增校验逻辑
-        required_keys = ('Date_URL', 'Invoice_File_URL', 'Billing_List_URL')
+        required_keys = ('Account', 'Password', 'Files_Import_URL', 'Files_Name', 'Files_Export_URL', 'Browser_URL')
         missing_keys = [k for k in required_keys if k not in configContent]
         if missing_keys:
             reply = QMessageBox.question(self, '信息', f"缺少必要配置项: {', '.join(missing_keys)}",
@@ -130,14 +130,14 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 self.textBrowser.append("创建并导入配置成功")
                 self.textBrowser.append('----------------------------------')
                 app.processEvents()
+        MyMainWindow.getDefaultInformation(self)
+        try:
+            self.textBrowser.append("配置获取成功")
+            self.textBrowser.append('----------------------------------')
+        except AttributeError:
+            QMessageBox.information(self, "提示信息", "已获取配置文件内容", QMessageBox.Yes)
         else:
-            MyMainWindow.getDefaultInformation(self)
-            try:
-                self.textBrowser.append("配置获取成功")
-            except AttributeError:
-                QMessageBox.information(self, "提示信息", "已获取配置文件内容", QMessageBox.Yes)
-            else:
-                pass
+            pass
 
     # 创建配置文件
     def createConfigContent(self):
@@ -193,8 +193,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         try:
             # data处理
             self.lineEdit.setText('%s\\%s' % (configContent['Files_Import_URL'], configContent['Files_Name']))
-            self.textBrowser.append("配置获取成功")
-            self.textBrowser.append('----------------------------------')
         except Exception as msg:
             self.textBrowser.append("错误信息：%s" % msg)
             self.textBrowser.append('----------------------------------')
