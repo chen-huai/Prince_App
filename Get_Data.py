@@ -22,7 +22,6 @@ class Get_Data():
             # self.fileData = pd.read_csv(self.fileDataUrl, keep_default_na=False)
         height, width = self.fileData.shape
 
-        self.fileData = excel_field_mapper.transform_dataframe(self.fileData)
         return self.fileData
 
     def getFileMoreSheetData(self, fileDataUrl, sheet_name=[]):
