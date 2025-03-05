@@ -14,10 +14,6 @@ class Browser():
         self.page_title = None
         self.playwright = None
         self.browser = None
-        self.msg = {}
-        self.msg['flag'] = True
-        self.msg['error'] = []
-        self.msg['info'] = []
         # # 登录网址
         # self.playwright = sync_playwright().start()
         # self.msg = {}
@@ -44,8 +40,22 @@ class Browser():
         #     self.msg['info'] = '登录成功'
         # except Exception:
         #     self.msg['info'] = '网页打开出现错误，请稍后重试'
-    def login(self, url, userinfo):
+
+    # 初始化消息
+    def initialize_msg(self):
+        msg = {}
+        msg['flag'] = True
+        msg['error'] = ''
+        msg['info'] = ''
+        msg['num'] = ''
+        return msg
+
+    def login(self, web_url, userinfo):
         # 登录网址
+        # TODO 登录成功
+        # 1. 登录成功
+        # 2. 网页打开出现错误，请稍后重试
+        msg = self.initialize_msg()
         self.playwright = sync_playwright().start()
         try:
             # 启动浏览器
@@ -54,8 +64,8 @@ class Browser():
             self.context = self.browser.new_context(user_agent='chen-fr@cn001.itgr.net')
             # 创建新的页面
             self.page = self.context.new_page()
-            # 导航到指定URL
-            self.page.goto(url)
+            # 导航到指定web_url
+            self.page.goto(web_url)
             # 填写用户名和密码
             self.page.locator('#i0116').fill(userinfo['account'])
             self.page.locator('#idSIButton9').click()
@@ -63,22 +73,185 @@ class Browser():
             self.page.locator('#submitButton').click()
             self.page.locator('#idSIButton9').click()
             # 等待导航完成
-            self.page.wait_for_url(url, timeout=600000)
-            self.msg['info'] = '登录成功'
+            self.page.wait_for_url(web_url, timeout=600000)
+            msg['info'] = '登录成功'
         except Exception as e:
-            self.msg['info'] = '网页打开出现错误，请稍后重试'
-            self.msg['error'] = e
-            self.msg['flag'] = False
+            msg['info'] = '网页打开出现错误，请稍后重试'
+            msg['error'] = e
+            msg['flag'] = False
 
-    def add_line(self, data):
-        flag = Browser.Verify_main_web()
-        if self.msg['flag']:
+        return msg
 
-            self.page.locator('#body_x_tabc_identity_prxidentity_x_proxyItemControl_x_grdItems_grd').click()
+    def add_line(self):
+        # 验证主页面是否成功加载
+        # TODO
+        # 1. 复制成功
+        # 2. 当前网络严重拥堵，请稍后重试
+        # 3. 表格加载失败，有可能表格未复制成功，也有可能是网络繁忙，请稍后重试
+        msg = self.verify_main_web()
+        if msg['flag']:
+            # 计算老表格的行数
+            old_row_count = self.page_tbody.locator('tr').count()
+            count = 0
+            # 等待加载主页面，并点击第一条line
+            while True:
+                try:
+                    # 定位到表格元素
+                    self.page_table = self.page.locator(
+                        '#body_x_tabc_identity_prxidentity_x_proxyItemControl_x_grdItems_grd')
+                    # 等待表格元素加载完成
+                    self.page_table.wait_for(timeout=60000)
+                    # 定位到表格的 tbody 元素
+                    self.page_tbody = self.page_table.locator('tbody')
+                    # 定位到第一行
+                    self.page_tbody_first_row = self.page_tbody.locator('tr:nth-child(1)')
+                    # 勾选第一行的复选框
+                    self.page_tbody_first_row.locator('td:nth-child(1)').locator(
+                        'input[type="checkbox"]').set_checked(True)
+                    # 勾选成功，退出循环
+                    if self.page_tbody_first_row.locator('td:nth-child(1)').locator(
+                            'input[type="checkbox"]').is_checked():
+                        break
+                except Exception as e:
+                    # 若勾选第一行出现错误，提示重试并记录日志
+                    count += 1
+                    if count == 5:  # 重试 5 次，超时关闭
+                        msg['info'] = '勾选第一行出现错误，当前网络严重拥堵，请稍后重试'
+                        msg['error'] = e
+                        msg['flag'] = False
+                        return msg
+            # 定位到复制按钮并点击
+            self.btn_copy = self.page.locator(
+                '//*[@id="body_x_tabc_identity_prxidentity_x_proxyItemControl_x_grdItems_btnCopyItem"]')
+            self.btn_copy.click()
+            # 复制后，等待主页面加载
+            msg = self.verify_main_web()
+            if msg['flag']:
+                msg = self.verify_table_add_line(old_row_count)
+                if msg['flag']:
+                    msg['info'] = '复制成功'
 
+        return msg
 
+    def edit_line(self, data):
+        # 验证主页面是否成功加载
+        # TODO 信息有三种情况
+        # 1. 填写成功
+        # 2. 当前网络严重拥堵，编辑表格弹窗未成功加载
+        # 3. iframe 弹窗未关闭成功，可能是网络繁忙，请稍后重试
+        # 4. iframe弹窗关闭成功
+        # 5. 该Order No无法在采购系统中使用,请解锁后重新填写
 
-    def Verify_main_web(self):
+        row = data
+        msg = self.verify_iframe_web()
+        if msg['flag']:
+            self.page.wait_for_timeout(5000)
+            # 在 iframe 中找到名为 "Account Assignment Category Sales Order" 的下拉框，并填充订单号
+            self.page_frame.get_by_role("combobox", name="Account Assignment Category Sales Order").fill(
+                str(row['Order Number']))
+            # 等待 5 秒，确保下拉框操作完成
+            self.page.wait_for_timeout(5000)
+            # 点击该下拉框
+            self.page_frame.get_by_role("combobox",
+                                   name="Account Assignment Category Sales Order").click()
+            # 等待 5 秒，确保下拉框操作完成
+            self.page.wait_for_timeout(5000)
+            # 使用更精确的下拉菜单定位器
+            # self.page_frame.locator("ul.scrolling.menu.visible li.item:first-child")
+            self.page.keyboard.press('Enter')
+            # # 点击 iframe 中的下拉框第一条数据
+            # self.page_frame.locator("div[id^='dropdown-']").first.click()
+            # 清空 iframe 中 id 为 'body_x_txtItemLabel' 的输入框
+            self.page_frame.locator('#body_x_txtItemLabel').clear()
+            # 填充该输入框为检测内容描述
+            self.page_frame.locator('#body_x_txtItemLabel').fill(row['检测内容描述'])
+            # 清空 iframe 中 id 为 'body_x_txtPrice' 的输入框
+            self.page_frame.locator('#body_x_txtPrice').clear()
+            # 填充该输入框为未税金额
+            rev = round(float(row['未税金额(/1+税点)']), 2)
+            self.page_frame.locator('#body_x_txtPrice').fill(str(rev))
+            # 点击该输入框
+            self.page_frame.locator('#body_x_txtPrice').click()
+            # 等待 2 秒，确保输入操作完成
+            self.page.wait_for_timeout(2000)
+            # 清空 iframe 中标签为 "%" 的输入框
+            self.page_frame.get_by_label("%").clear()
+            # 填充该输入框为 100
+            self.page_frame.get_by_label("%").fill('100')
+            # 等待 5 秒，确保输入操作完成
+            self.page.wait_for_timeout(5000)
+            # 获取下拉框关联的 div 元素的文本内容
+            sales_order = self.page_frame.get_by_role("combobox",
+                                                 name="Account Assignment Category Sales Order").locator(
+                '+div').inner_text()
+            revenue = self.page_frame.locator('#body_x_txtTotalPriceDiscounted').input_value()
+            if row['Order Number'] == int(sales_order):
+                # 等待 5 秒，确保操作完成
+                self.page.wait_for_timeout(1000)
+                if msg['flag']:
+                    msg['info'] = '填写成功'
+                    msg['data'] = {
+                        'request_id': self.request_id,
+                        'Prince Order Number': sales_order,
+                        'OPdEX Order Number': row['Order Number'],
+                        'Prince 金额': revenue,
+                        'OPdEX 未税金额(/1+税点)': row['未税金额(/1+税点)'],
+                    }
+            else:
+                msg['info'] = '该Order No无法在采购系统中使用,请解锁后重新填写'
+                msg['flag'] = False
+
+        return msg
+
+    # 验证主页面是否成功加载
+    def refresh(self, old_row_count):
+        # TODO
+        # 1. 复制成功
+        # 2. 当前网络严重拥堵，请稍后重试
+        # 3. 表格加载失败，有可能表格未复制成功，也有可能是网络繁忙，请稍后重试
+        self.page.reload()
+        msg = self.verify_main_web()
+        if msg['flag']:
+            msg = self.verify_table_add_line(old_row_count)
+
+        return msg
+
+    def close_iframe(self):
+        # TODO
+        # 1. iframe弹窗关闭成功
+        # 2. iframe 弹窗未关闭成功，可能是网络繁忙，请稍后重试
+
+        msg = self.initialize_msg()
+        flag = True
+        num = 0
+        while flag:
+            num += 1
+            if num <= 10:
+                # 点击 iframe 中的保存并关闭
+                self.page_frame.locator('//*[@id="proxyActionBar_x__cmdEnd"]').click()
+                msg = self.verify_close_iframe()
+                if msg['flag']:
+                    flag = False
+            else:
+                msg['info'] = 'iframe 弹窗未关闭成功，可能是网络繁忙，请稍后重试'
+                msg['flag'] = False
+                flag = False
+        return msg
+
+    def close_browser(self):
+        # 关闭浏览器
+        msg = self.initialize_msg()
+        self.browser.close()
+        self.playwright.stop()
+        msg['info'] = '浏览器已关闭'
+        return msg
+
+    # 验证主页面是否成功加载
+    def verify_main_web(self):
+        # TODO
+        # 1. 主页加载成功
+        # 2. 当前网络严重拥堵，请稍后重试
+        msg = self.initialize_msg()
         max_retries = 5
         self.page_tbody = None
         for attempt in range(max_retries):
@@ -89,37 +262,118 @@ class Browser():
                 self.page_table.wait_for(timeout=60000)
                 # 定位到表格的 tbody 元素
                 self.page_tbody = self.page_table.locator('tbody')
+                msg['info'] = '主页加载成功'
                 break
             except Exception as e:
                 if attempt == max_retries - 1:
-                    self.msg['info'] = '当前网络严重拥堵，请稍后重试'
-                    self.msg['error'] = e
-                    self.msg['flag'] = False
+                    msg['info'] = '当前网络严重拥堵，请稍后重试'
+                    msg['error'] = e
+                    msg['flag'] = False
+        return msg
 
-    def test_1(self):
-        self.page.page_table = self.page.locator(
-            '#body_x_tabc_identity_prxidentity_x_proxyItemControl_x_grdItems_grd')
+    def verify_iframe_web(self):
+        # TODO
+        # 1. iframe页面加载成功
+        # 2. 当前网络严重拥堵，编辑表格弹窗未成功加载
 
-    def test_2(self):
-        self.page.page_table = self.page.locator(
-            '#body_x_tabc_identity_prxidentity_x_proxyItemControl_x_grdItems_grd')
+        msg = self.initialize_msg()
+        max_retries = 5
+        self.page_tbody = None
+        for attempt in range(max_retries):
+            try:
+                # 定位到表格元素
+                self.page_table = self.page.locator('#body_x_tabc_identity_prxidentity_x_proxyItemControl_x_grdItems_grd')
+                # 等待表格元素加载完成
+                self.page_table.wait_for(timeout=60000)
+                # 定位到表格的 tbody 元素
+                self.page_tbody = self.page_table.locator('tbody')
+                # 定位到最后一行
+                self.page_tbody_last_row = self.page_tbody.locator('tr:nth-last-child(1)')
+                # 获取编号
+                self.request_id = self.page_tbody_last_row.locator('td:nth-child(5)').inner_text()
+                # 点击最后一行的修改链接
+                self.page_tbody_last_row.locator('td:nth-child(2)').locator('a').click()
+                # 等待 iframe 加载完成
+                self.page.wait_for_selector("iframe", timeout=10000)
+                # 定位到 iframe
+                self.page_frame = self.page.frame_locator("iframe")
+                msg['info'] = 'iframe页面加载成功'
+                break
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    msg['info'] = '当前网络严重拥堵，编辑表格弹窗未成功加载'
+                    msg['error'] = e
+                    msg['flag'] = False
+        return msg
+
+    def verify_table_add_line(self, old_row_count):
+        # 验证表格是否增加成功
+        # TODO
+        # 1. 表格加载失败，有可能表格未复制成功，也有可能是网络繁忙，请稍后重试
+        # 2. 复制成功
+
+        msg = self.initialize_msg()
+        flag = True
+        num = 0
+        while flag:
+            num += 1
+            new_row_count = self.page_tbody.locator('tr').count()
+            # 若新表格行数与老表格行数相同，提示重试并记录日志
+            if (new_row_count == old_row_count or new_row_count == 0) and num <= 30:
+                time.sleep(1)
+                flag = True
+            elif num > 30:
+                msg['info'] = '表格加载失败，有可能表格未复制成功，也有可能是网络繁忙，请稍后重试'
+                msg['num'] = new_row_count
+                msg['flag'] = False
+                flag = False
+            else:
+                msg['info'] = '复制成功'
+                msg['num'] = new_row_count
+                flag = False
+        return msg
+
+
+    def verify_close_iframe(self):
+        msg = self.initialize_msg()
+        max_retries = 5
+        self.page_tbody = None
+        for attempt in range(max_retries):
+            try:
+                self.page.locator('//button[@id="proxyActionBar_x__cmdEnd"]/span[text()="保存并关闭"]')
+                msg['info'] = 'iframe弹窗关闭成功'
+                break
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    msg['info'] = 'iframe 弹窗未关闭成功，可能是网络繁忙，请稍后重试'
+                    msg['error'] = e
+                    msg['flag'] = False
+        return msg
+
 
 
 if __name__ == "__main__":
     browser_path = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"  # 实际浏览器路径
     output_path = "C:\\Users\\chen-fr\\Desktop\\config\\data"
     file_data = pd.read_excel(r"C:\Users\chen-fr\Downloads\采购.xlsx")
-    url = 'https://prince.ivalua.app/page.aspx/zh/ord/basket_manage/124025'
+    web_url = 'https://prince.ivalua.app/page.aspx/zh/ord/basket_manage/124025'
     browser_obj = Browser(browser_path=browser_path, output_path=output_path)
     userinfo ={
         'account': 'chen-fr@cn001.itgr.net',
         'password': 'As123123',
     }
-    browser_obj.login(url, userinfo)
-    browser_obj.test_1()
-    print('aaa')
-    browser_obj.test_2()
+    msg_login = browser_obj.login(web_url, userinfo)
+    print(msg_login)
+    msg_line = browser_obj.add_line()
+    # @TODO 当网络卡住时，需要刷新页面
+    print('msg_line')
+    msg_edit = browser_obj.edit_line(file_data.iloc[1].to_dict())
+    print(msg_edit)
     print('dddd')
-    input("按回车键退出并关闭浏览器...")
+    msg_close = browser_obj.close_iframe()
+    print(msg_close)
+    browser_obj.close_browser()
+    # input("按回车键退出并关闭浏览器...")
     # browser_obj.test2()
     # print(data)
+    # 21-3
