@@ -8,9 +8,8 @@ import os
 import re
 
 class Browser():
-    def __init__(self, browser_path, output_path):
+    def __init__(self, browser_path):
         self.browser_path = browser_path
-        self.output_path = output_path
         self.page_title = None
         self.playwright = None
         self.browser = None
@@ -47,7 +46,8 @@ class Browser():
         msg['flag'] = True
         msg['error'] = ''
         msg['info'] = ''
-        msg['num'] = ''
+        msg['Table row count'] = ''
+        msg['data'] = {}
         return msg
 
     def login(self, web_url, userinfo):
@@ -67,9 +67,9 @@ class Browser():
             # 导航到指定web_url
             self.page.goto(web_url)
             # 填写用户名和密码
-            self.page.locator('#i0116').fill(userinfo['account'])
+            self.page.locator('#i0116').fill(userinfo['Account'])
             self.page.locator('#idSIButton9').click()
-            self.page.locator('#passwordInput').fill(userinfo['password'])
+            self.page.locator('#passwordInput').fill(userinfo['Password'])
             self.page.locator('#submitButton').click()
             self.page.locator('#idSIButton9').click()
             # 等待导航完成
@@ -85,9 +85,10 @@ class Browser():
     def add_line(self):
         # 验证主页面是否成功加载
         # TODO
-        # 1. 复制成功
-        # 2. 当前网络严重拥堵，请稍后重试
-        # 3. 表格加载失败，有可能表格未复制成功，也有可能是网络繁忙，请稍后重试
+        # 1. '复制成功' - 当表格复制操作成功完成
+        # 2. '勾选第一行出现错误，当前网络严重拥堵，请稍后重试' - 重试5次后仍无法勾选复选框
+        # 3. '表格加载失败，有可能表格未复制成功，也有可能是网络繁忙，请稍后重试' - 30次内表格行数未变化
+        # 4. '当前网络严重拥堵，请稍后重试'
         msg = self.verify_main_web()
         if msg['flag']:
             # 计算老表格的行数
@@ -130,6 +131,7 @@ class Browser():
                 msg = self.verify_table_add_line(old_row_count)
                 if msg['flag']:
                     msg['info'] = '复制成功'
+
 
         return msg
 
@@ -193,9 +195,9 @@ class Browser():
                     msg['data'] = {
                         'request_id': self.request_id,
                         'Prince Order Number': sales_order,
-                        'OPdEX Order Number': row['Order Number'],
+                        # 'OPdEX Order Number': row['Order Number'],
                         'Prince 金额': revenue,
-                        'OPdEX 未税金额(/1+税点)': row['未税金额(/1+税点)'],
+                        # 'OPdEX 未税金额(/1+税点)': row['未税金额(/1+税点)'],
                     }
             else:
                 msg['info'] = '该Order No无法在采购系统中使用,请解锁后重新填写'
@@ -244,6 +246,52 @@ class Browser():
         self.browser.close()
         self.playwright.stop()
         msg['info'] = '浏览器已关闭'
+        return msg
+
+    def process_data_flow(self, row_data):
+        """
+        完整数据流程处理
+        :param row_data: 单行数据字典
+        :return: 包含全流程状态的 msg 字典
+        """
+        msg = self.initialize_msg()
+
+        # 步骤1: 添加行
+        add_msg = self.add_line()
+        if not add_msg['flag']:
+            msg.update({
+                'error_step': 'add_line',
+                'error': add_msg['error'],
+                'info': f"添加行失败: {add_msg['info']}"
+            })
+            return msg
+        msg['Table row count'] = add_msg['Table row count']
+
+        # 步骤2: 编辑行
+        edit_msg = self.edit_line(row_data)
+        if not edit_msg['flag']:
+            msg.update({
+                'error_step': 'edit_line',
+                'error': edit_msg['error'],
+                'info': f"编辑行失败: {edit_msg['info']}"
+            })
+            return msg
+
+        # 步骤3: 关闭iframe
+        close_msg = self.close_iframe()
+        if not close_msg['flag']:
+            msg.update({
+                'error_step': 'close_iframe',
+                'error': close_msg['error'],
+                'info': f"关闭弹窗失败: {close_msg['info']}"
+            })
+            return msg
+
+        # 全部成功
+        msg.update({
+            'info': '完整数据流程执行成功',
+            'data': edit_msg.get('data', {})
+        })
         return msg
 
     # 验证主页面是否成功加载
@@ -324,12 +372,12 @@ class Browser():
                 flag = True
             elif num > 30:
                 msg['info'] = '表格加载失败，有可能表格未复制成功，也有可能是网络繁忙，请稍后重试'
-                msg['num'] = new_row_count
+                msg['Table row count'] = new_row_count
                 msg['flag'] = False
                 flag = False
             else:
                 msg['info'] = '复制成功'
-                msg['num'] = new_row_count
+                msg['Table row count'] = new_row_count
                 flag = False
         return msg
 
@@ -357,10 +405,10 @@ if __name__ == "__main__":
     output_path = "C:\\Users\\chen-fr\\Desktop\\config\\data"
     file_data = pd.read_excel(r"C:\Users\chen-fr\Downloads\采购.xlsx")
     web_url = 'https://prince.ivalua.app/page.aspx/zh/ord/basket_manage/124025'
-    browser_obj = Browser(browser_path=browser_path, output_path=output_path)
+    browser_obj = Browser(browser_path=browser_path)
     userinfo ={
-        'account': 'chen-fr@cn001.itgr.net',
-        'password': 'As123123',
+        'Account': 'chen-fr@cn001.itgr.net',
+        'Password': 'As123123',
     }
     msg_login = browser_obj.login(web_url, userinfo)
     print(msg_login)
