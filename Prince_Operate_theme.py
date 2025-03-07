@@ -20,7 +20,7 @@ from Table_Operate import *
 from Logger import *
 from theme_manager_theme import ThemeManager
 from File_Operate import *
-
+from Browser_operation import *
 
 
 class MyMainWindow(QMainWindow, Ui_MainWindow):
@@ -40,8 +40,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         toggle_button = QPushButton("Toggle Theme")
         toggle_button.clicked.connect(self.theme_manager.toggle_theme)
         layout.addWidget(toggle_button)
-        
-
 
         self.actionExport.triggered.connect(self.exportConfig)
         self.actionImport.triggered.connect(self.importConfig)
@@ -50,6 +48,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.actionHelp.triggered.connect(self.showVersion)
         self.actionAuthor.triggered.connect(self.showAuthorMessage)
         self.theme_manager.set_theme("blue")  # 设置默认主题
+        self.pushButton.clicked.connect(self.prince_op)
         self.pushButton_4.clicked.connect(self.textBrowser.clear)
         self.pushButton_2.clicked.connect(self.getPrinceFile)
 
@@ -78,20 +77,18 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         global now
         global last_time
         global today
-        global oneWeekday
         global fileUrl
 
-        date = datetime.datetime.now() + datetime.timedelta(days=1)
         now = int(time.strftime('%Y'))
         last_time = now - 1
         today = time.strftime('%Y.%m.%d')
-        oneWeekday = (datetime.datetime.now() + datetime.timedelta(days=7)).strftime('%Y.%m.%d')
         desktopUrl = os.path.join(os.path.expanduser("~"), 'Desktop')
         configFileUrl = '%s\\config' % desktopUrl
         configFile = os.path.exists('%s/config_prince.csv' % configFileUrl)
         # print(desktopUrl,configFileUrl,configFile)
         if not configFile:  # 判断是否存在文件夹如果不存在则创建为文件夹
-            reply = QMessageBox.question(self, '信息', '确认是否要创建配置文件', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+            reply = QMessageBox.question(self, '信息', '确认是否要创建配置文件', QMessageBox.Yes | QMessageBox.No,
+                                         QMessageBox.Yes)
             if reply == QMessageBox.Yes:
                 if not os.path.exists(configFileUrl):
                     os.makedirs(configFileUrl)
@@ -149,17 +146,18 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
         configContent = [
             ['信息', '内容', '备注'],
-            ['Account', 'chen-fr@cn001.itgr.net','文件数据路径'],
-            ['Password', 'As123123','文件数据路径'],
-            ['Files_Import_URL', 'N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\收样\\3.Sap\\ODM Data - XM',
-             '文件数据路径'],
-            ['Files_Name','采购录入.csv','特殊开票文件路径'],
+            ['Account', 'chen-fr@cn001.itgr.net', '账号'],
+            ['Password', 'As123123', '密码'],
+            ['Files_Import_URL',
+             'N:\\XM Softlines\\6. Personel\\5. Personal\Supporting Team\\2.财务\\7.外部分包\\4.软件数据',
+             '文件数据输入路径'],
+            ['Files_Name', '采购录入.csv', '文件名称'],
             ['Files_Export_URL',
-             'N:\\XM Softlines\\6. Personel\\5. Personal\\Supporting Team\\收样\\3.Sap\\ODM Data - XM\\2.特殊开票',
-             '特殊开票文件路径'],
+             'N:\\XM Softlines\\6. Personel\\5. Personal\Supporting Team\\2.财务\\7.外部分包\\4.软件数据',
+             '文件导出路径'],
             ['Browser_URL',
              'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-             '特殊开票文件路径'],
+             '浏览器路径'],
         ]
         config = np.array(configContent)
         df = pd.DataFrame(config)
@@ -172,7 +170,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     # 导出配置文件
     def exportConfig(self):
         # 重新导出默认配置文件
-        reply = QMessageBox.question(self, '信息', '确认是否要创建默认配置文件', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        reply = QMessageBox.question(self, '信息', '确认是否要创建默认配置文件', QMessageBox.Yes | QMessageBox.No,
+                                     QMessageBox.Yes)
         if reply == QMessageBox.Yes:
             MyMainWindow.createConfigContent(self)
         else:
@@ -181,7 +180,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     # 导入配置文件
     def importConfig(self):
         # 重新导入配置文件
-        reply = QMessageBox.question(self, '信息', '确认是否要导入配置文件', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        reply = QMessageBox.question(self, '信息', '确认是否要导入配置文件', QMessageBox.Yes | QMessageBox.No,
+                                     QMessageBox.Yes)
         if reply == QMessageBox.Yes:
             MyMainWindow.getConfigContent(self)
         else:
@@ -197,7 +197,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.textBrowser.append("错误信息：%s" % msg)
             self.textBrowser.append('----------------------------------')
             app.processEvents()
-            reply = QMessageBox.question(self, '信息', '错误信息：%s。\n是否要重新创建配置文件' % msg, QMessageBox.Yes | QMessageBox.No,
+            reply = QMessageBox.question(self, '信息', '错误信息：%s。\n是否要重新创建配置文件' % msg,
+                                         QMessageBox.Yes | QMessageBox.No,
                                          QMessageBox.Yes)
             if reply == QMessageBox.Yes:
                 MyMainWindow.createConfigContent(self)
@@ -246,20 +247,84 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         myTable.showMaximized()
 
     def prince_op(self):
+        prince_msg = {}
+        prince_msg['flag'] = True
         data_file = self.lineEdit.text()
         web_url = self.lineEdit_2.text()
-        if data_file:
-            self.textBrowser.append("开始执行操作")
-            app.processEvents()
+        now = time.strftime('%Y%m%d %H%M%S')
+        log_file_path = '%s\\log %s.xlsx' % (configContent['Files_Export_URL'], now)
+        log_file = Logger(log_file_path,
+                          ['Update', 'request_id', 'Table row count', 'Prince Order Number', 'Prince 金额',
+                           'OPdEX Order Number',
+                           'OPdEX 未税金额(/1+税点)', 'remark'])
+        # 判断文件是否存在
+        if data_file != '' and web_url != '':
+            log_list = {}
             data_obj = Get_Data()
             df = data_obj.getFileData(data_file)
-            if df.empty:
-                self.textBrowser.append("文件为空")
-                app.processEvents()
+            # 判断数据是否包含所有必要字段
+            required_columns = ['Order Number', '未税金额(/1+税点)', '检测内容描述']
+            if set(required_columns).issubset(df.columns):
+                self.textBrowser.append("包含所有必要字段")
+                try:
+                    self.textBrowser.append("开始执行操作")
+                    app.processEvents()
+                    browser_obj = Browser(browser_path=configContent['Browser_URL'])
+                    msg_login = browser_obj.login(web_url, configContent)
+                    if msg_login['flag']:
+                        self.textBrowser.append("登录成功")
+                        app.processEvents()
+                        for index, row in df.iterrows():
+                            log_list['OPdEX Order Number'] = row['Order Number']
+                            log_list['OPdEX 未税金额(/1+税点)'] = row['未税金额(/1+税点)']
+                            self.textBrowser.append(f"第 {index + 1}行开始处理")
+                            app.processEvents()
+                            process_msg = browser_obj.process_data_flow(row.to_dict())
+                            if not process_msg['flag']:
+                                self.textBrowser.append("<font color='red'>第%s行开始处理 %s 处理失败：%s</font>" % (
+                                index + 1, row['Order Number'], process_msg['info']))
+                                log_list['remark'] = process_msg['info']
+                                app.processEvents()
+                            else:
+                                log_list['remark'] = '完整流程跑完'
+                            log_list['Prince Order Number'] = process_msg['data'].get('Prince Order Number')
+                            log_list['Prince 金额'] = process_msg['data'].get('Prince 金额')
+                            log_list['Table row count'] = process_msg['Table row count']
+                            log_list['request_id'] = process_msg['data'].get('request_id')
+                            # 记录成功日志
+                            log_file.log(log_list)
+                            self.textBrowser.append(f"第 {index + 1}行,{row['Order Number']}处理成功")
+                            self.textBrowser.append("Request ID:%s Order No.:%s Prince 金额:%s" % (log_list['request_id'], str(log_list['Prince Order Number']), str(log_list['Prince 金额'])))
+                            app.processEvents()
+
+                        self.textBrowser.append("所有数据处理完成")
+                        app.processEvents()
+                        log_file.save_log_to_excel()
+                        self.textBrowser.append("日志记录完成，保存路径%s" % log_file_path)
+                        browser_obj.close_browser()
+                        os.startfile(log_file_path)
+                    else:
+                        self.textBrowser.append("登录失败")
+                except Exception as msg:
+                    log_file.save_log_to_excel()
+                    self.textBrowser.append("日志记录完成，保存路径%s" % log_file_path)
+                    self.textBrowser.append("错误信息：%s" % msg)
+                    self.textBrowser.append("退出采购录入")
+                    app.processEvents()
+
             else:
-                pass
-
-
+                missing = set(required_columns) - set(df.columns)
+                self.textBrowser.append(f"缺少必要字段: {missing}")
+                self.textBrowser.append(f"-----------------------------")
+                app.processEvents()
+        elif web_url == '':
+            self.textBrowser.append(f"<font color='red'>没有采购网址</font>")
+            self.textBrowser.append(f"-----------------------------")
+            app.processEvents()
+        else:
+            self.textBrowser.append(f"<font color='red'>没有采购文件</font>")
+            self.textBrowser.append(f"-----------------------------")
+            app.processEvents()
 
 
 if __name__ == "__main__":

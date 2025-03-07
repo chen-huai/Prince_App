@@ -47,7 +47,11 @@ class Browser():
         msg['error'] = ''
         msg['info'] = ''
         msg['Table row count'] = ''
-        msg['data'] = {}
+        msg['data'] = {
+            'request_id': '',
+            'Prince Order Number': '',
+            'Prince 金额': '',
+        }
         return msg
 
     def login(self, web_url, userinfo):
@@ -79,6 +83,7 @@ class Browser():
             msg['info'] = '网页打开出现错误，请稍后重试'
             msg['error'] = e
             msg['flag'] = False
+            self.browser.close()
 
         return msg
 
@@ -177,9 +182,13 @@ class Browser():
             # 等待 2 秒，确保输入操作完成
             self.page.wait_for_timeout(2000)
             # 清空 iframe 中标签为 "%" 的输入框
-            self.page_frame.get_by_label("%").clear()
+            self.page_frame.locator(
+                'div.data_to_update.percent-allocation-line input[type="text"]'
+            ).clear()
             # 填充该输入框为 100
-            self.page_frame.get_by_label("%").fill('100')
+            self.page_frame.locator(
+                'div.data_to_update.percent-allocation-line input[type="text"]'
+            ).fill('100')
             # 等待 5 秒，确保输入操作完成
             self.page.wait_for_timeout(5000)
             # 获取下拉框关联的 div 元素的文本内容
@@ -400,28 +409,28 @@ class Browser():
 
 
 
-if __name__ == "__main__":
-    browser_path = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"  # 实际浏览器路径
-    output_path = "C:\\Users\\chen-fr\\Desktop\\config\\data"
-    file_data = pd.read_excel(r"C:\Users\chen-fr\Downloads\采购.xlsx")
-    web_url = 'https://prince.ivalua.app/page.aspx/zh/ord/basket_manage/124025'
-    browser_obj = Browser(browser_path=browser_path)
-    userinfo ={
-        'Account': 'chen-fr@cn001.itgr.net',
-        'Password': 'As123123',
-    }
-    msg_login = browser_obj.login(web_url, userinfo)
-    print(msg_login)
-    msg_line = browser_obj.add_line()
-    # @TODO 当网络卡住时，需要刷新页面
-    print('msg_line')
-    msg_edit = browser_obj.edit_line(file_data.iloc[1].to_dict())
-    print(msg_edit)
-    print('dddd')
-    msg_close = browser_obj.close_iframe()
-    print(msg_close)
-    browser_obj.close_browser()
-    # input("按回车键退出并关闭浏览器...")
-    # browser_obj.test2()
-    # print(data)
-    # 21-3
+# if __name__ == "__main__":
+#     browser_path = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"  # 实际浏览器路径
+#     output_path = "C:\\Users\\chen-fr\\Desktop\\config\\data"
+#     file_data = pd.read_excel(r"C:\Users\chen-fr\Downloads\采购.xlsx")
+#     web_url = 'https://prince.ivalua.app/page.aspx/zh/ord/basket_manage/124025'
+#     browser_obj = Browser(browser_path=browser_path)
+#     userinfo ={
+#         'Account': 'chen-fr@cn001.itgr.net',
+#         'Password': 'As123123',
+#     }
+#     msg_login = browser_obj.login(web_url, userinfo)
+#     print(msg_login)
+#     msg_line = browser_obj.add_line()
+#     # @TODO 当网络卡住时，需要刷新页面
+#     print('msg_line')
+#     msg_edit = browser_obj.edit_line(file_data.iloc[1].to_dict())
+#     print(msg_edit)
+#     print('dddd')
+#     msg_close = browser_obj.close_iframe()
+#     print(msg_close)
+#     browser_obj.close_browser()
+#     # input("按回车键退出并关闭浏览器...")
+#     # browser_obj.test2()
+#     # print(data)
+#     # 21-3
