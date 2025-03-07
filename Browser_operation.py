@@ -45,6 +45,7 @@ class Browser():
         msg = {}
         msg['flag'] = True
         msg['error'] = ''
+        msg['error_step'] = ''
         msg['info'] = ''
         msg['Table row count'] = ''
         msg['data'] = {

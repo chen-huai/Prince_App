@@ -283,12 +283,13 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             if not process_msg['flag']:
                                 self.textBrowser.append("<font color='red'>第%s行开始处理 %s 处理失败：%s</font>" % (
                                 index + 1, row['Order Number'], process_msg['info']))
-                                log_list['remark'] = process_msg['info']
+                                log_list['remark'] = process_msg.get['error_step', ''] + ';' + process_msg.get['info', ''] + ';' + process_msg.get['error', '']
                                 app.processEvents()
+                                browser_obj.close_iframe()
                             else:
                                 log_list['remark'] = '完整流程跑完'
-                            log_list['Prince Order Number'] = process_msg['data'].get('Prince Order Number')
-                            log_list['Prince 金额'] = process_msg['data'].get('Prince 金额')
+                            log_list['Prince Order Number'] = int(process_msg['data'].get('Prince Order Number'))
+                            log_list['Prince 金额'] = float(process_msg['data'].get('Prince 金额').replace(',',''))
                             log_list['Table row count'] = process_msg['Table row count']
                             log_list['request_id'] = process_msg['data'].get('request_id')
                             # 记录成功日志
@@ -308,6 +309,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 except Exception as msg:
                     log_file.save_log_to_excel()
                     self.textBrowser.append("日志记录完成，保存路径%s" % log_file_path)
+                    os.startfile(log_file_path)
                     self.textBrowser.append("错误信息：%s" % msg)
                     self.textBrowser.append("退出采购录入")
                     app.processEvents()
