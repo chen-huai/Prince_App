@@ -51,6 +51,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton.clicked.connect(self.prince_op)
         self.pushButton_4.clicked.connect(self.textBrowser.clear)
         self.pushButton_2.clicked.connect(self.getPrinceFile)
+        self.pushButton_5.clicked.connect(lambda: self.viewData(self.lineEdit.text()))
 
     def init_theme_action(self):
         theme_action = QAction(QIcon('theme_icon.png'), 'Toggle Theme', self)
@@ -240,11 +241,14 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
     # 查看SAP操作数据详情
     def viewData(self, url):
-        fileUrl = url
-        data_obj = Get_Data()
-        df = data_obj.getFileData(fileUrl)
-        myTable.createTable(df)
-        myTable.showMaximized()
+        try:
+            fileUrl = url
+            data_obj = Get_Data()
+            df = data_obj.getFileData(fileUrl)
+            myTable.createTable(df)
+            myTable.showMaximized()
+        except Exception as msg:
+            self.textBrowser.append("错误信息：%s" % msg)
 
     def prince_op(self):
         prince_msg = {}
@@ -256,7 +260,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         log_file = Logger(log_file_path,
                           ['Update', 'request_id', 'Table row count', 'Prince Order Number', 'Prince 金额',
                            'OPdEX Order Number',
-                           'OPdEX 未税金额(/1+税点)', 'remark'])
+                           'OPdEX 未税金额(/1+税点)', 'remark', 'Order check', 'Revenue check'])
         # 判断文件是否存在
         if data_file != '' and web_url != '':
             log_list = {}
@@ -292,6 +296,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             log_list['Prince 金额'] = float(process_msg['data'].get('Prince 金额').replace(',',''))
                             log_list['Table row count'] = process_msg['Table row count']
                             log_list['request_id'] = process_msg['data'].get('request_id')
+                            # 'Order check', 'Revenue check'
+                            log_list['Order check'] = log_list['Prince Order Number'] == log_list['OPdEX Order Number']
+                            log_list['Revenue check'] = log_list['Prince 金额'] == log_list['OPdEX 未税金额(/1+税点)']
                             # 记录成功日志
                             log_file.log(log_list)
                             self.textBrowser.append(f"第 {index + 1}行,{row['Order Number']}处理成功")

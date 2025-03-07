@@ -26,8 +26,8 @@
    <string>Prince</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="chicon.qrc">
-    <normaloff>:/ch.ico</normaloff>:/ch.ico</iconset>
+   <iconset>
+    <normaloff>ch-2.ico</normaloff>ch-2.ico</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -43,6 +43,9 @@
        <string>操作</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="lineEdit_2"/>
+       </item>
        <item row="1" column="0">
         <widget class="QPushButton" name="pushButton_3">
          <property name="enabled">
@@ -56,9 +59,6 @@
        <item row="0" column="1">
         <widget class="QLineEdit" name="lineEdit"/>
        </item>
-       <item row="1" column="1">
-        <widget class="QLineEdit" name="lineEdit_2"/>
-       </item>
        <item row="0" column="0">
         <widget class="QPushButton" name="pushButton_2">
          <property name="text">
@@ -67,6 +67,32 @@
         </widget>
        </item>
        <item row="0" column="2">
+        <widget class="QPushButton" name="pushButton_5">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>查看文件</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QPushButton" name="pushButton_4">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>清空数据</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3" rowspan="2">
         <widget class="QPushButton" name="pushButton">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
@@ -76,13 +102,6 @@
          </property>
          <property name="text">
           <string>开始填写</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="2">
-        <widget class="QPushButton" name="pushButton_4">
-         <property name="text">
-          <string>清空数据</string>
          </property>
         </widget>
        </item>
@@ -180,8 +199,6 @@
    </property>
   </action>
  </widget>
- <resources>
-  <include location="chicon.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

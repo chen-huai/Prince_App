@@ -17,8 +17,8 @@
    <string>数据</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="chicon.qrc">
-    <normaloff>:/ch.ico</normaloff>:/ch.ico</iconset>
+   <iconset>
+    <normaloff>ch-2.ico</normaloff>ch-2.ico</iconset>
   </property>
   <property name="statusTip">
    <string>作者：Frank Chen</string>
@@ -304,14 +304,12 @@
      <x>0</x>
      <y>0</y>
      <width>686</width>
-     <height>23</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
- <resources>
-  <include location="chicon.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
