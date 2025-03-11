@@ -24,7 +24,7 @@ class Ui_MainWindow(object):
         font.setPointSize(10)
         MainWindow.setFont(font)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("ch-2.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap(":/ch-2.ico"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -92,7 +92,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.groupBox_2)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 985, 29))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 985, 25))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         font = QtGui.QFont()
@@ -151,3 +151,4 @@ class Ui_MainWindow(object):
         self.actionHelp.setText(_translate("MainWindow", "Help"))
         self.actionImport.setText(_translate("MainWindow", "Import"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
+

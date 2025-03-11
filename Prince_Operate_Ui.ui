@@ -26,8 +26,8 @@
    <string>Prince</string>
   </property>
   <property name="windowIcon">
-   <iconset>
-    <normaloff>ch-2.ico</normaloff>ch-2.ico</iconset>
+   <iconset resource="chicon.qrc">
+    <normaloff>:/ch-2.ico</normaloff>:/ch-2.ico</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -134,7 +134,7 @@
      <x>0</x>
      <y>0</y>
      <width>985</width>
-     <height>29</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -199,6 +199,8 @@
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="chicon.qrc"/>
+ </resources>
  <connections/>
 </ui>
