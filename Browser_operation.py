@@ -213,6 +213,7 @@ class Browser():
                 else:
                     msg['info'] = '该Order No无法在采购系统中使用,请解锁后重新填写'
                     msg['flag'] = False
+                    raise msg
         except Exception as e:
             msg['info'] = '报错了'
             msg['error'] = e

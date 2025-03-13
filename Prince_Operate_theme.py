@@ -279,8 +279,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         self.textBrowser.append("登录成功")
                         app.processEvents()
                         for index, row in df.iterrows():
+                            time.sleep(5)
                             log_list['OPdEX Order Number'] = row['Order Number']
-                            log_list['OPdEX 未税金额(/1+税点)'] = row['未税金额(/1+税点)']
+                            log_list['OPdEX 未税金额(/1+税点)'] = round(float(row['未税金额(/1+税点)']), 2)
                             self.textBrowser.append(f"第 {index + 1}行开始处理")
                             app.processEvents()
                             process_msg = browser_obj.process_data_flow(row.to_dict())
@@ -292,8 +293,16 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                 browser_obj.close_iframe()
                             else:
                                 log_list['remark'] = '完整流程跑完'
-                            log_list['Prince Order Number'] = int(process_msg['data'].get('Prince Order Number'))
-                            log_list['Prince 金额'] = float(process_msg['data'].get('Prince 金额').replace(',',''))
+                            # 情况 1: 原始值为空或不存在时
+                            # process_msg['data'] 中没有 'Prince Order Number' 字段
+                            # 会使用默认值 '0' -> 最终得到 0
+                            prince_order_str = str(process_msg['data'].get('Prince Order Number', '0')).strip()
+                            # 移除逗号等非数字字符
+                            prince_order_clean = prince_order_str.replace(',', '').replace(' ', '')
+                            log_list['Prince Order Number'] = int(
+                                prince_order_clean) if prince_order_clean.isdigit() else 0
+                            prince_amount_str = str(process_msg['data'].get('Prince 金额', '0')).replace(',', '')
+                            log_list['Prince 金额'] = float(prince_amount_str) if prince_amount_str else 0.0
                             log_list['Table row count'] = process_msg['Table row count']
                             log_list['request_id'] = process_msg['data'].get('request_id')
                             # 'Order check', 'Revenue check'
@@ -312,18 +321,20 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         browser_obj.close_browser()
                         os.startfile(log_file_path)
                     else:
-                        self.textBrowser.append("登录失败")
+                        self.textBrowser.append("<font color='red'>登录失败</font>")
+                        browser_obj.close_browser()
                 except Exception as msg:
                     log_file.save_log_to_excel()
                     self.textBrowser.append("日志记录完成，保存路径%s" % log_file_path)
                     os.startfile(log_file_path)
-                    self.textBrowser.append("错误信息：%s" % msg)
-                    self.textBrowser.append("退出采购录入")
+                    browser_obj.close_browser()
+                    self.textBrowser.append("<font color='red'>错误信息：%s</font>" % msg)
+                    self.textBrowser.append("<font color='red'>退出采购录入</font>")
                     app.processEvents()
 
             else:
                 missing = set(required_columns) - set(df.columns)
-                self.textBrowser.append(f"缺少必要字段: {missing}")
+                self.textBrowser.append(f"<font color='red'>缺少必要字段: {missing}</font>")
                 self.textBrowser.append(f"-----------------------------")
                 app.processEvents()
         elif web_url == '':
