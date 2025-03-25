@@ -321,6 +321,64 @@ class Browser():
         })
         return msg
 
+    def select_final_delivery(self):
+        """批量选中所有最终收货复选框"""
+        msg = self.initialize_msg()
+        try:
+            final_web = self.verify_final_delivery()
+            if not final_web['flag']:
+                msg.update({
+                    'flag': False,
+                    'error': final_web['error'],
+                    'info': '最终收货页面加载失败',
+                    'error_step':'verify_final_delivery'
+                })
+                return msg
+            # 定位所有目标checkbox
+            checkboxes = self.page.locator('td[data-iv-role="cell"] input[type="checkbox"][aria-label="最终收货"]')
+            
+            # 获取总数
+            count = checkboxes.count()
+            
+            # 批量操作
+            for i in range(count):
+                checkbox = checkboxes.nth(i)
+                # 添加延迟逻辑
+                if i % 10 == 0:  # 每10个暂停2秒
+                    self.page.wait_for_timeout(2000)
+                else:  # 其他操作暂停500毫秒
+                    self.page.wait_for_timeout(500)
+                # 添加状态检查
+                if checkbox.is_checked():
+                    continue  # 跳过已选中的复选框
+                # 通过DOM关系定位关联元素
+                checkbox.element_handle().evaluate('''
+                    checkbox => {
+                        // 查找相邻的隐藏域
+                        const hiddenInput = checkbox.nextElementSibling.nextElementSibling;
+                        if (hiddenInput && hiddenInput.type === 'hidden') {
+                            hiddenInput.value = 'True';
+                            hiddenInput.dispatchEvent(new Event('change'));
+                        }
+                        // 触发点击事件
+                        checkbox.click();
+                    }
+                ''')
+
+            # 验证选中数量
+            checked_count = checkboxes.evaluate_all('nodes => nodes.filter(n => n.checked).length')
+            if checked_count != count:
+                raise Exception(f"成功选中 {checked_count}/{count} 个复选框")
+            msg['info'] = f'已成功选中 {checked_count}/{count} 个最终收货复选框'
+        except Exception as e:
+            msg.update({
+                'flag': False,
+                'error': str(e),
+                'info': '批量选中复选框时发生错误',
+                'error_step': 'select_all_final_deliveries'
+            })
+        return msg
+
     # 验证主页面是否成功加载
     def verify_main_web(self):
         # 1. 主页加载成功
@@ -422,7 +480,35 @@ class Browser():
                     msg['flag'] = False
         return msg
 
-
+    def verify_final_delivery(self):
+        # 验证最终收货复选框是否选中
+        # 1. 最终收货复选框未选中
+        # 2. 最终收货复选框已选中
+        msg = self.initialize_msg()
+        try:
+            # 更精确的定位策略
+            content_div = self.page.locator(
+                'div[id^="body_x_tabc_prxDelivery_prxprxDelivery_x_prxItem_x_gridDeliveryItems_phcgridDeliveryItems_content"]'
+            )
+            
+            # 添加更严格的验证
+            if not content_div.get_attribute("id").endswith("_content"):
+                raise Exception("定位到非内容容器")
+                
+            # 等待内容加载完成
+            content_div.wait_for(state="visible", timeout=30000)
+            
+            msg['data']['container'] = content_div
+            msg['info'] = '成功定位到动态表格容器'
+        
+        except Exception as e:
+            msg.update({
+                'flag': False,
+                'error': str(e),
+                'info': '定位动态表格容器失败',
+                'error_step': 'verify_final_delivery'
+            })
+        return msg
 
 # if __name__ == "__main__":
 #     browser_path = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"  # 实际浏览器路径

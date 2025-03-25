@@ -52,6 +52,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_4.clicked.connect(self.textBrowser.clear)
         self.pushButton_2.clicked.connect(self.getPrinceFile)
         self.pushButton_5.clicked.connect(lambda: self.viewData(self.lineEdit.text()))
+        self.pushButton_6.clicked.connect(self.final_op)
 
     def init_theme_action(self):
         theme_action = QAction(QIcon('theme_icon.png'), 'Toggle Theme', self)
@@ -345,6 +346,22 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.textBrowser.append(f"<font color='red'>没有采购文件</font>")
             self.textBrowser.append(f"-----------------------------")
             app.processEvents()
+
+    def final_op(self):
+        web_path = self.lineEdit_2.text()
+        browser_final = Browser(browser_path=configContent['Browser_URL'])
+        # ...登录等操作...
+        login_result = browser_final.login(web_path, configContent)
+        if not login_result['flag']:
+            self.textBrowser.append(f"登录失败: {login_result['error']}")
+            return login_result['msg']
+        result = browser_final.select_final_delivery()
+        if result['flag']:
+            self.textBrowser.append("选中成功")
+            self.textBrowser.append(result['info'])
+        else:
+            self.textBrowser.append(f"错误: {result['error']}")
+        browser_final.close_browser()
 
 
 if __name__ == "__main__":
