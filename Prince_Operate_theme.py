@@ -348,21 +348,27 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             app.processEvents()
 
     def final_op(self):
-        web_path = self.lineEdit_2.text()
-        browser_final = Browser(browser_path=configContent['Browser_URL'])
-        # ...登录等操作...
-        login_result = browser_final.login(web_path, configContent)
-        if not login_result['flag']:
-            self.textBrowser.append(f"登录失败: {login_result['error']}")
-            return login_result['msg']
-        result = browser_final.select_final_delivery()
-        if result['flag']:
-            self.textBrowser.append("选中成功")
-            self.textBrowser.append(result['info'])
-        else:
-            self.textBrowser.append(f"错误: {result['error']}")
-        browser_final.close_browser()
-
+        try:
+            web_path = self.lineEdit_2.text()
+            if web_path == '':
+                self.textBrowser.append("请输入网址")
+                return
+            browser_final_obj = Browser(browser_path=configContent['Browser_URL'])
+            # ...登录等操作...
+            login_result = browser_final_obj.login(web_path, configContent)
+            if not login_result['flag']:
+                self.textBrowser.append(f"<font color='red'>登录失败:\n{login_result['error']}</font>")
+            result = browser_final_obj.select_final_delivery()
+            if result['flag']:
+                self.textBrowser.append("选中成功")
+                self.textBrowser.append(result['info'])
+            else:
+                self.textBrowser.append(f"<font color='red'>错误: \n{result['error']}</font>")
+            browser_final_obj.close_browser()
+        except Exception as e:
+            self.textBrowser.append(f"<font color='red'>错误: {e}</font>")
+            if 'browser_final_obj' in locals() and browser_final_obj is not None:  # Add null check
+                browser_final_obj.close_browser()
 
 if __name__ == "__main__":
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
