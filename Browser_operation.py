@@ -289,6 +289,7 @@ class Browser():
             msg.update({
                 'error_step': 'add_line',
                 'error': add_msg['error'],
+                'flag': False,
                 'info': f"添加行失败: {add_msg['info']}"
             })
             return msg
@@ -300,6 +301,7 @@ class Browser():
             msg.update({
                 'error_step': 'edit_line',
                 'error': edit_msg['error'],
+                'flag': False,
                 'info': f"编辑行失败: {edit_msg['info']}"
             })
             return msg
@@ -310,6 +312,7 @@ class Browser():
             msg.update({
                 'error_step': 'close_iframe',
                 'error': close_msg['error'],
+                'flag': False,
                 'info': f"关闭弹窗失败: {close_msg['info']}"
             })
             return msg

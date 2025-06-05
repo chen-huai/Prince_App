@@ -288,8 +288,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             process_msg = browser_obj.process_data_flow(row.to_dict())
                             if not process_msg['flag']:
                                 self.textBrowser.append("<font color='red'>第%s行开始处理 %s 处理失败：%s</font>" % (
-                                index + 1, row['Order Number'], process_msg['info']))
-                                log_list['remark'] = process_msg.get['error_step', ''] + ';' + process_msg.get['info', ''] + ';' + process_msg.get['error', '']
+                                str(index + 1), str(row['Order Number']), process_msg['info']))
+                                log_list['remark'] = ';'.join([
+                                    str(process_msg.get('error_step', '')),
+                                    str(process_msg.get('info', '')),
+                                    str(process_msg.get('error', ''))
+                                ])
                                 app.processEvents()
                                 browser_obj.close_iframe()
                             else:
@@ -329,7 +333,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                     self.textBrowser.append("日志记录完成，保存路径%s" % log_file_path)
                     os.startfile(log_file_path)
                     browser_obj.close_browser()
-                    self.textBrowser.append("<font color='red'>错误信息：%s</font>" % msg)
+                    self.textBrowser.append("<font color='red'>错误信息：%s</font>" % str(msg))
                     self.textBrowser.append("<font color='red'>退出采购录入</font>")
                     app.processEvents()
 
