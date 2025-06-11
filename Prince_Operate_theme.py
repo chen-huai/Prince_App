@@ -280,7 +280,17 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                         self.textBrowser.append("登录成功")
                         app.processEvents()
                         for index, row in df.iterrows():
-                            time.sleep(5)
+                            # Check if browser is still active
+                            if not browser_obj.is_browser_active():
+                                self.textBrowser.append("<font color='red'>浏览器已关闭，停止处理</font>")
+                                app.processEvents()
+                                # Save logs before breaking
+                                log_file.save_log_to_excel()
+                                self.textBrowser.append("日志记录完成，保存路径%s" % log_file_path)
+                                os.startfile(log_file_path)
+                                break
+                            
+                            time.sleep(3)
                             log_list['OPdEX Order Number'] = row['Order Number']
                             log_list['OPdEX 未税金额(/1+税点)'] = round(float(row['未税金额(/1+税点)']), 2)
                             self.textBrowser.append(f"第 {index + 1}行开始处理")

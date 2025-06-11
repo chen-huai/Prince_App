@@ -77,7 +77,7 @@ class Browser():
             self.page.locator('#submitButton').click()
             self.page.locator('#idSIButton9').click()
             # 等待导航完成
-            self.page.wait_for_url(web_url, timeout=600000)
+            self.page.wait_for_url(web_url, timeout=200000)
             msg['info'] = '登录成功'
         except Exception as e:
             msg['info'] = '网页打开出现错误，请稍后重试'
@@ -106,7 +106,7 @@ class Browser():
                         self.page_table = self.page.locator(
                             '#body_x_tabc_identity_prxidentity_x_proxyItemControl_x_grdItems_grd')
                         # 等待表格元素加载完成
-                        self.page_table.wait_for(timeout=60000)
+                        self.page_table.wait_for(timeout=5000)
                         # 定位到表格的 tbody 元素
                         self.page_tbody = self.page_table.locator('tbody')
                         # 定位到第一行
@@ -154,17 +154,17 @@ class Browser():
         msg = self.verify_iframe_web()
         try:
             if msg['flag']:
-                self.page.wait_for_timeout(5000)
+                self.page.wait_for_timeout(1000)
                 # 在 iframe 中找到名为 "Account Assignment Category Sales Order" 的下拉框，并填充订单号
                 self.page_frame.get_by_role("combobox", name="Account Assignment Category Sales Order").fill(
                     str(row['Order Number']))
                 # 等待 5 秒，确保下拉框操作完成
-                self.page.wait_for_timeout(5000)
+                self.page.wait_for_timeout(1000)
                 # 点击该下拉框
                 self.page_frame.get_by_role("combobox",
                                        name="Account Assignment Category Sales Order").click()
                 # 等待 5 秒，确保下拉框操作完成
-                self.page.wait_for_timeout(5000)
+                self.page.wait_for_timeout(1000)
                 # 使用更精确的下拉菜单定位器
                 # self.page_frame.locator("ul.scrolling.menu.visible li.item:first-child")
                 self.page.keyboard.press('Enter')
@@ -182,7 +182,7 @@ class Browser():
                 # 点击该输入框
                 self.page_frame.locator('#body_x_txtPrice').click()
                 # 等待 2 秒，确保输入操作完成
-                self.page.wait_for_timeout(2000)
+                self.page.wait_for_timeout(1000)
                 # 清空 iframe 中标签为 "%" 的输入框
                 self.page_frame.locator(
                     'div.data_to_update.percent-allocation-line input[type="text"]'
@@ -192,7 +192,7 @@ class Browser():
                     'div.data_to_update.percent-allocation-line input[type="text"]'
                 ).fill('100')
                 # 等待 5 秒，确保输入操作完成
-                self.page.wait_for_timeout(5000)
+                self.page.wait_for_timeout(1000)
                 # 获取下拉框关联的 div 元素的文本内容
                 sales_order = self.page_frame.get_by_role("combobox",
                                                      name="Account Assignment Category Sales Order").locator(
@@ -275,6 +275,20 @@ class Browser():
             msg['flag'] = False
         return msg
 
+    def is_browser_active(self):
+        """检查浏览器是否还在运行"""
+        try:
+            # 检查浏览器对象是否存在
+            if not self.browser:
+                return False
+
+            # 尝试执行一个简单的操作来验证浏览器是否真的在运行
+            # 如果浏览器已关闭，这个操作会抛出异常
+            self.page.evaluate('() => document.readyState')
+            return True
+        except Exception:
+            return False
+
     def process_data_flow(self, row_data):
         """
         完整数据流程处理
@@ -339,10 +353,10 @@ class Browser():
                 return msg
             # 定位所有目标checkbox
             checkboxes = self.page.locator('td[data-iv-role="cell"] input[type="checkbox"][aria-label="最终收货"]')
-            
+
             # 获取总数
             count = checkboxes.count()
-            
+
             # 批量操作
             for i in range(count):
                 checkbox = checkboxes.nth(i)
@@ -394,7 +408,7 @@ class Browser():
                 # 定位到表格元素
                 self.page_table = self.page.locator('#body_x_tabc_identity_prxidentity_x_proxyItemControl_x_grdItems_grd')
                 # 等待表格元素加载完成
-                self.page_table.wait_for(timeout=60000)
+                self.page_table.wait_for(timeout=5000)
                 # 定位到表格的 tbody 元素
                 self.page_tbody = self.page_table.locator('tbody')
                 msg['info'] = '主页加载成功'
@@ -418,7 +432,7 @@ class Browser():
                 # 定位到表格元素
                 self.page_table = self.page.locator('#body_x_tabc_identity_prxidentity_x_proxyItemControl_x_grdItems_grd')
                 # 等待表格元素加载完成
-                self.page_table.wait_for(timeout=60000)
+                self.page_table.wait_for(timeout=5000)
                 # 定位到表格的 tbody 元素
                 self.page_tbody = self.page_table.locator('tbody')
                 # 定位到最后一行
@@ -428,7 +442,7 @@ class Browser():
                 # 点击最后一行的修改链接
                 self.page_tbody_last_row.locator('td:nth-child(2)').locator('a').click()
                 # 等待 iframe 加载完成
-                self.page.wait_for_selector("iframe", timeout=10000)
+                self.page.wait_for_selector("iframe", timeout=1000)
                 # 定位到 iframe
                 self.page_frame = self.page.frame_locator("iframe")
                 msg['info'] = 'iframe页面加载成功'
@@ -493,11 +507,11 @@ class Browser():
             content_div = self.page.locator(
                 'div[id^="body_x_tabc_prxDelivery_prxprxDelivery_x_prxItem_x_gridDeliveryItems_phcgridDeliveryItems_content"]'
             )
-            
+
             # 添加更严格的验证
             if not content_div.get_attribute("id").endswith("_content"):
                 raise Exception("定位到非内容容器")
-                
+
             # 等待内容加载完成
             content_div.wait_for(state="visible", timeout=30000)
             
