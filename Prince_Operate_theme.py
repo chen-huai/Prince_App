@@ -328,7 +328,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                             self.textBrowser.append(f"第 {index + 1}行,{row['Order Number']}处理成功")
                             self.textBrowser.append("Request ID:%s Order No.:%s Prince 金额:%s" % (log_list['request_id'], str(log_list['Prince Order Number']), str(log_list['Prince 金额'])))
                             app.processEvents()
-
+                        time.sleep(5)
                         self.textBrowser.append("所有数据处理完成")
                         app.processEvents()
                         log_file.save_log_to_excel()

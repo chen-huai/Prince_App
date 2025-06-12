@@ -77,7 +77,7 @@ class Browser():
             self.page.locator('#submitButton').click()
             self.page.locator('#idSIButton9').click()
             # 等待导航完成
-            self.page.wait_for_url(web_url, timeout=200000)
+            self.page.wait_for_url(web_url, timeout=500000)
             msg['info'] = '登录成功'
         except Exception as e:
             msg['info'] = '网页打开出现错误，请稍后重试'
@@ -106,7 +106,7 @@ class Browser():
                         self.page_table = self.page.locator(
                             '#body_x_tabc_identity_prxidentity_x_proxyItemControl_x_grdItems_grd')
                         # 等待表格元素加载完成
-                        self.page_table.wait_for(timeout=5000)
+                        self.page_table.wait_for(timeout=50000)
                         # 定位到表格的 tbody 元素
                         self.page_tbody = self.page_table.locator('tbody')
                         # 定位到第一行
@@ -408,7 +408,7 @@ class Browser():
                 # 定位到表格元素
                 self.page_table = self.page.locator('#body_x_tabc_identity_prxidentity_x_proxyItemControl_x_grdItems_grd')
                 # 等待表格元素加载完成
-                self.page_table.wait_for(timeout=5000)
+                self.page_table.wait_for(timeout=50000)
                 # 定位到表格的 tbody 元素
                 self.page_tbody = self.page_table.locator('tbody')
                 msg['info'] = '主页加载成功'
@@ -432,7 +432,7 @@ class Browser():
                 # 定位到表格元素
                 self.page_table = self.page.locator('#body_x_tabc_identity_prxidentity_x_proxyItemControl_x_grdItems_grd')
                 # 等待表格元素加载完成
-                self.page_table.wait_for(timeout=5000)
+                self.page_table.wait_for(timeout=50000)
                 # 定位到表格的 tbody 元素
                 self.page_tbody = self.page_table.locator('tbody')
                 # 定位到最后一行
@@ -442,7 +442,7 @@ class Browser():
                 # 点击最后一行的修改链接
                 self.page_tbody_last_row.locator('td:nth-child(2)').locator('a').click()
                 # 等待 iframe 加载完成
-                self.page.wait_for_selector("iframe", timeout=1000)
+                self.page.wait_for_selector("iframe", timeout=10000)
                 # 定位到 iframe
                 self.page_frame = self.page.frame_locator("iframe")
                 msg['info'] = 'iframe页面加载成功'
